@@ -19,6 +19,10 @@ React.memo 处理函数式组件的重新渲染
 
 ### 样式
 
+#### 
+ > 页面布局组件：处理页面title固定，页面滚动等问题
+ > 处理刘海屏  css surport属性
+
 > 背景模糊化
 > filter: blur(5px);
 
@@ -122,9 +126,46 @@ zigbee 成组问题（多个接口成功失败如何处理
 
 ### git 记录
 
+### 分支操作
+
 - 本地先开好分支然后推送到远程
 
 > git push origin feature-branch:feature-branch
+
+- 拉去远程某个分支到本地并切换过去
+
+> git fetch origin [remote-branch-name]
+> git checkout -b [local-branch-name] origin/[remote-branch-name]
+
+### git diff
+
+- git diff 查看尚未暂存的文件变更部分
+- git diff --staged 查看已暂存的变更
+
+### git log (常用)
+
+- git log --stat 显示每次更新的文件修改统计信息
+- git log --graph 显示 ASCII 图形表示的分支合并历史
+- git log --pretty=short 使用其他格式显示历史提交信息。可用的选项包括 oneline，short，full，fuller 和 format（后跟指定格式
+- git log git log --pretty=format:"%h - %an, %ar : %s"
+- git log -- [path] 查看制定文件或者目录的提交记录
+- git log --author=[person] 查看某个开发者提交记录
+
+### 撤销操作
+
+#### 取消暂存文件
+
+- git reset HEAD <file>
+
+#### 撤销对文件修改
+
+- git checkout --<file>
+
+### git config
+
+- git conifg -l
+- git config --global alias.co checkout 别名
+- git config --global user.name [name] 用户配置
 
 ### 具体逻辑（createRoom)
 
@@ -173,3 +214,97 @@ zigbee 成组问题（多个接口成功失败如何处理
 2 让焦点元素失去焦点 el.blur();
 
 参考 https://blog.csdn.net/yc123h/article/details/51337411
+
+// 2019
+https://github.com/iamafresh/2019-demo.git
+
+## latest
+
+- @supports
+
+## 物联网相关
+
+- [MQTT 入门](https://www.runoob.com/w3cnote/mqtt-intro.html)
+- [MQTT 中文网](http://mqtt.p2hp.com/mqtt311)
+
+## 跟踪
+
+1 一个问题：创建一个默认亮度和默认色温的 scene 执行 scene 回传回来的数据是有误差的
+
+## 再次强调原则
+
+- 逻辑与 UI 分离
+- State 最小化
+
+## 请求
+
+### 异步串行实现
+
+- for of + await
+- reduce + promise
+- async(第三方库)
+
+## sensor group 设计
+
+UI
+按照功能模块划分局部组件（这样好处是局部组件可以自己管理内部字段的依赖关系）局部组件内部各字段使用全局基础组件 参考（MoreEdit 组件）
+
+逻辑处理
+按照上面的局部组件作为局部容器组件处理业务，每个模块无非就是编辑某些字段
+redux 设计
+沿用以前的思路：只需要一个 action action 内容包括字段和字段值
+good：简化 redux 代码 简化 action 定义 文件导出 action 等
+bad: 不能保证每次 action 的字段名是有效的
+
+解决方式： 字段名 常量化，reducer 中检测字段名，方可保证字段名有效
+
+todo
+1 整理相关全局基础 UI 组件
+2 是否中间协议层的？这部分估时是否没有？
+3 是否后面还会添加 zigbee 协议
+4 如何做到逻辑与 UI 分离，可维护可扩展？
+
+feat/LMS-8903
+
+### 一些自定义方法
+
+```js
+/**
+ * 请求重试方法
+ * @param {Function} fn 请求方法
+ * @param {Object} data 请求参数对象
+ * @param {Number} count 重试次数
+ * @return {Promise}
+ */
+export async function reTry(fn, data, count) {
+  if (count === 0) {
+    const errorRes = {
+      code: 400,
+      data: { message: '重试多次失败' },
+    };
+    return errorRes;
+  }
+
+  const res = await fn.call(window, data);
+
+  if (res && res.code === 200) {
+    return res;
+  }
+
+  count -= 1;
+  return await reTry(fn, data, count);
+}
+```
+
+```js
+// call自定义实现
+/* 想想有这样一个对象 const obj = {name: 'song'} 调用原生call方法 就相当于在这个对象上面添加一个同名方法调用 */
+Function.prototype.myCall = function myCall(...rest) {
+    const context = rest[0]
+    const fn = this;
+    context.func = fn;
+    
+    return context.func(...rest.slice(1))
+}
+```
+
